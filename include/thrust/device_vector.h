@@ -10,6 +10,13 @@
 
 namespace thrust {
 
+/*! A std::vector like container with storage in device memory. Does not
+ * implementation all features of std::vector or cuda thrust::device_vector.
+ * In particular, iterators are not yet supported.
+ *
+ * For the SYCL backend, a default singleton cl::sycl::queue object is used
+ * for all operations.
+ */
 template <typename T>
 class device_vector {
   using value_type = T;

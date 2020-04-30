@@ -22,13 +22,14 @@ class host_vector {
 
   public:
     host_vector(size_type count) : m_queue(thrust::sycl::get_queue()),
-                                     m_vec(count, host_alloc_type(m_queue)) {}
+                                   m_vec(count, host_alloc_type(m_queue)) {}
     host_vector() : host_vector(0) {}
     T& operator[](size_type i);
     const T& operator[](size_type i) const;
     void resize(size_type new_size);
     size_type size();
     T* data();
+    const T const* data() const;
 };
 
 
@@ -58,6 +59,11 @@ inline typename host_vector<T>::size_type host_vector<T>::size() {
 
 template <typename T>
 inline T* host_vector<T>::data() {
+  return m_vec.data();
+}
+
+template <typename T>
+inline const T const* host_vector<T>::data() const {
   return m_vec.data();
 }
 

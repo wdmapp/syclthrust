@@ -3,7 +3,7 @@
 #include <thread>
 
 #include <thrust/device_vector.h>
-//#include <thrust/sycl.h>
+#include <thrust/copy.h>
 
 using namespace std::chrono_literals;
 using namespace cl::sycl;
@@ -59,8 +59,9 @@ int main(int argc, char **argv) {
     });
     e1.wait();
 
-    q.memcpy(h_a.data(), d_a_data, N*sizeof(int));
-    q.memcpy(h_b.data(), d_b_data, N*sizeof(int));
+    thrust::copy(d_a.data(), d_a.data() + d_a.size(), h_a.data());
+    thrust::copy(d_b.data(), d_b.data() + d_b.size(), h_b.data());
+    // test compat with direct SYCL
     q.memcpy(h_c.data(), d_c_data, N*sizeof(int));
     q.wait();
 

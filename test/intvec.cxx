@@ -4,6 +4,7 @@
 
 #include <thrust/device_vector.h>
 #include <thrust/copy.h>
+#include <thrust/complex.h>
 
 using namespace std::chrono_literals;
 using namespace cl::sycl;
@@ -29,21 +30,25 @@ int main(int argc, char **argv) {
               << " {" << dev.get_info<info::device::vendor>() << "}"
               << std::endl;
 
-    thrust::device_vector<int> d_a{N};
-    thrust::device_vector<int> d_b{N};
-    thrust::device_vector<int> d_c{N};
-    std::vector<int> h_a(N);
-    std::vector<int> h_b(N);
-    std::vector<int> h_c(N);
+    // make the int vector complex, just to exercise more things used by
+    // gtensor... #hackz
+    using value_type = thrust::complex<double>;
 
-    int *d_a_data = d_a.data();
-    int *d_b_data = d_b.data();
-    int *d_c_data = d_c.data();
+    thrust::device_vector<value_type> d_a{N};
+    thrust::device_vector<value_type> d_b{N};
+    thrust::device_vector<value_type> d_c{N};
+    std::vector<value_type> h_a(N);
+    std::vector<value_type> h_b(N);
+    std::vector<value_type> h_c(N);
+
+    value_type *d_a_data = d_a.data();
+    value_type *d_b_data = d_b.data();
+    value_type *d_c_data = d_c.data();
 
     auto e0 = q.submit([&](handler & cgh) {
         cgh.parallel_for<class DeviceVectorInit>(range<1>(N), [=](id<1> idx) {
             int i = idx[0];
-            d_a_data[i] = i;
+            d_a_data[i] = static_cast<value_type>(i);
         });
     });
     e0.wait();
@@ -54,7 +59,7 @@ int main(int argc, char **argv) {
     auto e1 = q.submit([&](handler & cgh) {
         cgh.parallel_for<class DeviceVectorAdd>(range<1>(N), [=](id<1> idx) {
             int i = idx[0];
-            d_c_data[i] = d_a_data[i] * d_b_data[i];
+            d_c_data[i] = d_a_data[i].real() * d_b_data[i].real();
         });
     });
     e1.wait();
@@ -62,7 +67,7 @@ int main(int argc, char **argv) {
     thrust::copy(d_a.data(), d_a.data() + d_a.size(), h_a.data());
     thrust::copy(d_b.data(), d_b.data() + d_b.size(), h_b.data());
     // test compat with direct SYCL
-    q.memcpy(h_c.data(), d_c_data, N*sizeof(int));
+    q.memcpy(h_c.data(), d_c_data, N*sizeof(value_type));
     q.wait();
 
     for (i=0; i<N; i++) {

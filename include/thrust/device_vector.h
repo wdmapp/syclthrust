@@ -19,16 +19,12 @@ namespace thrust {
  */
 template <typename T>
 class device_vector {
-  using value_type = T;
-  using size_type = typename std::size_t;
-  using device_alloc_type = cl::sycl::usm_allocator<T, cl::sycl::usm::alloc::device>;
-  using device_vector_type = std::vector<T, device_alloc_type>;
-
-  private:
-    cl::sycl::queue& m_queue;
-    device_vector_type m_vec;
-
   public:
+    using value_type = T;
+    using size_type = typename std::size_t;
+    using device_alloc_type = cl::sycl::usm_allocator<T, cl::sycl::usm::alloc::device>;
+    using device_vector_type = std::vector<T, device_alloc_type>;
+
     device_vector(size_type count) : m_queue(thrust::sycl::get_queue()),
                                      m_vec(count, device_alloc_type(m_queue)) {}
     device_vector() : device_vector(0) {}
@@ -71,6 +67,10 @@ class device_vector {
     size_type size() const;
     T* data();
     const T* data() const;
+
+  private:
+    cl::sycl::queue& m_queue;
+    device_vector_type m_vec;
 };
 
 

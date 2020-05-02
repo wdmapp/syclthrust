@@ -15,3 +15,5 @@ using complex = typename std::complex<T>;
 } // namespace thrust
 
 #endif // THRUST_COMPLEX_H
+
+// vim: ts=2 sw=2

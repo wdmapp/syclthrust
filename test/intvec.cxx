@@ -3,6 +3,7 @@
 #include <thread>
 
 #include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
 #include <thrust/copy.h>
 #include <thrust/complex.h>
 
@@ -37,9 +38,9 @@ int main(int argc, char **argv) {
     thrust::device_vector<value_type> d_a{N};
     thrust::device_vector<value_type> d_b{N};
     thrust::device_vector<value_type> d_c{N};
-    std::vector<value_type> h_a(N);
-    std::vector<value_type> h_b(N);
-    std::vector<value_type> h_c(N);
+    thrust::host_vector<value_type> h_a(N);
+    thrust::host_vector<value_type> h_b(N);
+    thrust::host_vector<value_type> h_c(N);
 
     value_type *d_a_data = d_a.data();
     value_type *d_b_data = d_b.data();
@@ -77,3 +78,5 @@ int main(int argc, char **argv) {
 
     return 0;
 }
+
+// vim: ts=2 sw=2

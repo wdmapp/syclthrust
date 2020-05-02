@@ -6,6 +6,7 @@
 #include <thrust/host_vector.h>
 #include <thrust/copy.h>
 #include <thrust/complex.h>
+#include <thrust/device_ptr.h>
 
 using namespace std::chrono_literals;
 using namespace cl::sycl;
@@ -42,8 +43,8 @@ int main(int argc, char **argv) {
     thrust::host_vector<value_type> h_b(N);
     thrust::host_vector<value_type> h_c(N);
 
-    value_type *d_a_data = d_a.data();
-    value_type *d_b_data = d_b.data();
+    value_type *d_a_data = thrust::device_pointer_cast(d_a.data());
+    value_type *d_b_data = thrust::raw_pointer_cast(d_b.data());
     value_type *d_c_data = d_c.data();
 
     auto e0 = q.submit([&](handler & cgh) {

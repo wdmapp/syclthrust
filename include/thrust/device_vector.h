@@ -21,9 +21,16 @@ template <typename T>
 class device_vector {
   public:
     using value_type = T;
-    using size_type = typename std::size_t;
-    using device_alloc_type = cl::sycl::usm_allocator<T, cl::sycl::usm::alloc::device>;
-    using device_vector_type = std::vector<T, device_alloc_type>;
+
+    using device_alloc_type = cl::sycl::usm_allocator<value_type,
+                                                cl::sycl::usm::alloc::device>;
+    using device_vector_type = std::vector<value_type, device_alloc_type>;
+
+    using pointer = typename device_vector_type::pointer;
+    using const_pointer = typename device_vector_type::const_pointer;
+    using reference = typename device_vector_type::reference;
+    using const_reference = typename device_vector_type::const_reference;
+    using size_type = typename device_vector_type::size_type;
 
     device_vector(size_type count) : m_queue(thrust::sycl::get_queue()),
                                      m_vec(count, device_alloc_type(m_queue)) {}
@@ -33,17 +40,15 @@ class device_vector {
     device_vector(const device_vector &dv)
       : m_queue(thrust::sycl::get_queue()),
         m_vec(dv.m_vec.size(), device_alloc_type(m_queue)) {
-      m_queue.memcpy(m_vec.data(), dv.data(),
-                     min(m_vec.size(),dv.size())*sizeof(T));
+      assert(m_vec.size() == dv.m_vec.size());
+      m_queue.memcpy(m_vec.data(), dv.data(), m_vec.size()*sizeof(T));
       m_queue.wait();
     }
-    device_vector(device_vector &&dv)
-      : m_queue(std::move(dv.m_queue)),
-        m_vec(std::move(dv.m_vec)) {}
+    device_vector(device_vector &&dv) = delete;
 
     // operators
-    T& operator[](size_type i);
-    const T& operator[](size_type i) const;
+    reference operator[](size_type i);
+    const_reference operator[](size_type i) const;
 
     device_vector& operator=(const device_vector &dv) {
       resize(dv.size());
@@ -53,6 +58,8 @@ class device_vector {
       return *this;
     }
 
+    device_vector& operator=(device_vector &&dv) = delete;
+    /*
     device_vector& operator=(device_vector &&dv) {
         m_vec = std::move(dv.m_vec);
 
@@ -61,12 +68,13 @@ class device_vector {
 
         return *this;
     }
+    */
 
     // functions
     void resize(size_type new_size);
     size_type size() const;
-    T* data();
-    const T* data() const;
+    pointer data();
+    const_pointer data() const;
 
   private:
     cl::sycl::queue& m_queue;
@@ -82,30 +90,35 @@ inline void device_vector<T>::resize(device_vector::size_type new_size) {
 
 
 template <typename T>
-inline T& device_vector<T>::operator[](device_vector::size_type i) {
+inline typename device_vector<T>::reference
+device_vector<T>::operator[](device_vector::size_type i) {
   return m_vec[i];
 }
 
 
 template <typename T>
-inline const T& device_vector<T>::operator[](device_vector::size_type i) const {
+inline typename device_vector<T>::const_reference
+device_vector<T>::operator[](device_vector::size_type i) const {
   return m_vec[i];
 }
 
 
 template <typename T>
-inline typename device_vector<T>::size_type device_vector<T>::size() const {
+inline typename device_vector<T>::size_type
+device_vector<T>::size() const {
   return m_vec.size();
 }
 
 template <typename T>
-inline T* device_vector<T>::data() {
+inline typename device_vector<T>::pointer
+device_vector<T>::data() {
   return m_vec.data();
 }
 
 
 template <typename T>
-inline const T * device_vector<T>::data() const {
+inline typename device_vector<T>::const_pointer
+device_vector<T>::data() const {
   return m_vec.data();
 }
 

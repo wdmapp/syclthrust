@@ -47,6 +47,14 @@ int main(int argc, char **argv) {
     value_type *d_b_data = thrust::raw_pointer_cast(d_b.data());
     value_type *d_c_data = d_c.data();
 
+    std::cout << "d_a " << d_a_data << std::endl;
+    std::cout << "d_b " << d_b_data << std::endl;
+    std::cout << "d_c " << d_c_data << std::endl;
+
+    std::cout << "h_a " << h_a.data() << std::endl;
+    std::cout << "h_b " << h_b.data() << std::endl;
+    std::cout << "h_c " << h_c.data() << std::endl;
+
     auto e0 = q.submit([&](handler & cgh) {
         cgh.parallel_for<class DeviceVectorInit>(range<1>(N), [=](id<1> idx) {
             int i = idx[0];
@@ -55,13 +63,18 @@ int main(int argc, char **argv) {
     });
     e0.wait();
 
-    // memcpy and wait
+    // test copy operator=
     d_b = d_a;
+
+    // test copy constructor
+    thrust::device_vector<value_type> d_x{d_a};
+    value_type *d_x_data = d_x.data();
 
     auto e1 = q.submit([&](handler & cgh) {
         cgh.parallel_for<class DeviceVectorAdd>(range<1>(N), [=](id<1> idx) {
             int i = idx[0];
-            d_c_data[i] = d_a_data[i].real() * d_b_data[i].real();
+            d_c_data[i] = d_a_data[i].real() * d_b_data[i].real()
+                        + d_x_data[i].real();
         });
     });
     e1.wait();
